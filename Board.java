@@ -9,6 +9,7 @@ public class Board {
 	private boolean[][] wallMap;
 	private int[][] tileMap;
 	private boolean[][] visibleMap;
+	private boolean[][] highlightMap;
 	
 	public Board() {
 	}
@@ -22,6 +23,7 @@ public class Board {
 		width = walls.length;
 		height = walls[0].length;
 		visibleMap = new boolean[width][height];
+		highlightMap = new boolean[width][height];
 	}
 	
 	public int getWidth() {
@@ -52,6 +54,30 @@ public class Board {
 	
 	public void inVisualRange() {
 		
+	}
+	
+	public void highlight(int x, int y, int distance) {
+		for (int a = 0; a < getWidth(); a++) {
+			for (int b = 0; b < getHeight(); b++) {
+				highlightMap[a][b] = getDistance(a, b, x, y) <= distance && !wallMap[a][b];
+			}
+		}
+	}
+	
+	public void clearHighlighting() {
+		for (int a = 0; a < getWidth(); a++) {
+			for (int b = 0; b < getHeight(); b++) {
+				highlightMap[a][b] = false;
+			}
+		}
+	}
+	
+	public boolean getHighlight(int x, int y) {
+		return highlightMap[x][y];
+	}
+	
+	public int getDistance(int a1, int b1, int a2, int b2) {
+		return Math.abs(a1 - a2) + Math.abs(b1 - b2);
 	}
 	
 }

@@ -19,6 +19,7 @@ import javax.swing.JPanel;
 public class Display {
 
 	public int rows, cols, width, height, scale;
+	private boolean showAll = false;
 	
 	private JLabel[][] tiles;
 	private ArrayList<BufferedImage> tileImages = new ArrayList<BufferedImage>();
@@ -56,11 +57,12 @@ public class Display {
 	/*
 	 * constructor, accepts rows and cols for the map tiles, and a width and height to fit it in
 	 */
-	public Display(int r, int c, int w, int h, JPanel panel) {
+	public Display(int r, int c, int w, int h, JPanel panel, boolean s) {
 		rows = r;
 		cols = c;
 		width = w;
 		height = h;
+		showAll = s;
 		
 		int labelWidth = width / cols;
 		int labelHeight = height / rows;
@@ -86,38 +88,48 @@ public class Display {
 	 */
 	public void displayBoard(Board board, ArrayList<ActorController> actors) {
 		int[][] lightMap = new int[0][0];
-		if (board.darkened) {
+		if (board.darkened && !showAll) {
 			lightMap = calculateLightmap(board, actors);
 		}
 		for (int x = 0; x < board.getWidth(); x++) {
 			for (int y = 0; y < board.getHeight(); y++) {
 				int tileChoice = board.getTileAt(x, y);
 				int lightMapValue = 4;
-				if (board.darkened) {
+				if (board.darkened && !showAll) {
 					lightMapValue = lightMap[x][y];
 					if (lightMapValue > 4) {
 						lightMapValue = 4;
 					}
 				}
+				double highlightValue = 1;
+				if (board.getHighlight(x, y)) {
+					highlightValue = 1.2;
+				}
 				
-				tiles[x][y].setIcon(new ImageIcon(darkenTile(tileMap[tileChoice], lightMapValue/4.0)));
+				tiles[x][y].setIcon(new ImageIcon(highlightTile(darkenTile(tileMap[tileChoice], lightMapValue/4.0), highlightValue)));
 				//tiles[x][y].setIcon(new ImageIcon(tileMap[tileChoice]));
 			}
 		}
 	}
 	
-	public void highlightActor(Board board, Actor act) {
-		for (int x = 0; x < board.getWidth(); x++) {
-			for (int y = 0; y < board.getHeight(); y++) {
-				if (getDistance(x, y, act.x, act.y) <= act.distance) {
-					tiles[x][y].setIcon(new ImageIcon(highlightTile(tileMap[board.getTileAt(x, y)], 1.2)));
-				}
-			}
+	public void displayActor(Actor act) {
+		int remove = 1;
+		if (act instanceof Actor) {
+			remove = 2;
+		}
+		tiles[act.x][act.y].setIcon(new ImageIcon(tileMap[tileMap.length - 2]));
+	}
+	
+	public void update(Board board, ArrayList<ActorController> actorControllers) {
+		displayBoard(board, actorControllers);
+		for (ActorController act: actorControllers) {
+			displayActor(act.actor);
 		}
 	}
 	
-	public int getDistance(int a1, int b1, int a2, int b2) {
-		return Math.abs(a1 - a2) + Math.abs(b1 - b2);
+	
+	public void highlightActor(Board board, Actor act) {
+		board.highlight(act.x, act.y, act.distance);
 	}
 	
 	/*
@@ -167,19 +179,6 @@ public class Display {
 			for (int y = 0; y < cols; y++) {
 				tiles[x][y].setIcon(new ImageIcon(tileMap[0]));
 			}
-		}
-	}
-	
-	public void displayActors(ArrayList<Actor> actors, JPanel panel) {
-		for (Actor act: actors) {
-			//place actor jlabel on the right square
-			//if actor is a player
-			JLabel newActor = new JLabel(new ImageIcon(playerImage));
-			//else
-			//JLabel newActor = new JLabel(new ImageIcon(enemyImage));
-			actorLabels.add(newActor);
-			panel.add(newActor);
-			newActor.setBounds(500, 500, width/cols, height/rows);
 		}
 	}
 	

@@ -1,4 +1,6 @@
 import java.awt.Dimension;
+import java.awt.FileDialog;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -18,17 +20,26 @@ import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 
-public class Driver implements ActionListener, MouseListener {
+public class Driver extends JFrame implements ActionListener, MouseListener {
 
 	public Board board;
 	public Display driverDisplay, displayDisplay;
 	public ArrayList<ActorController> actorControllers;
 
-	public JFrame driverFrame, displayFrame;
+	private Font defaultFont = new Font("Arial", Font.PLAIN, 24);
+	
+	//declare driver-specific ui objects
+	private JTextArea battleArea;
+	private JButton newWorldButton, startBattleButton, incrementBattleButton, mapLoadButton;
+	
+	public JFrame driverFrame = this;
+	public JFrame displayFrame;
 	
 	public BufferedImage playerImg = loadImage(new File("C:\\Users\\conno\\OneDrive\\Desktop\\Projector\\Sprites\\player.png"));
 	public BufferedImage enemyImg = loadImage(new File("C:\\Users\\conno\\OneDrive\\Desktop\\Projector\\Sprites\\enemy.png"));
@@ -36,27 +47,20 @@ public class Driver implements ActionListener, MouseListener {
 	public Driver() {
 		//load in board and actors from file
 		//or maybe for hackathon just do it manually
-		int[] dims = getMapDims(mapPath + "cave.txt");
-		int[][] map = new int[dims[0]][dims[1]];
-		boolean[][] walls = new boolean[dims[0]][dims[1]];
-		boolean dark = getMapDarkness(mapPath + "cave.txt");
-		loadMap(map, walls, mapPath + "cave.txt");
-
-		board = new Board(map, walls);
-		board.darkened = dark;
+		setupBoard("cave.txt");
 
 		actorControllers = new ArrayList<ActorController>();
 		actorControllers.add(new ActorController(0, 0, 4, "Suhas", playerImg, 5));
-		actorControllers.add(new ActorController(7, 14, 8, "Elegant Wood", playerImg, 5));
-		actorControllers.add(new ActorController(16, 10, 8, "Death Tyrant", enemyImg, 7));
+		actorControllers.add(new ActorController(7, 14, 12, "Elegant Wood", playerImg, 5));
+		actorControllers.add(new ActorController(16, 10, 12, "Death Tyrant", enemyImg, 7));
 
 		initDriverFrame();
-		//initDisplayFrame();
+		initDisplayFrame();
 		
 	}
 
 	public void initDriverFrame() {
-		driverFrame = new JFrame();
+		//driverFrame = new JFrame();
 
 		//initialize panel
 		JPanel panel = new JPanel() {
@@ -71,26 +75,58 @@ public class Driver implements ActionListener, MouseListener {
 		driverFrame.setTitle("D&D - Driver");
 		Rectangle rec = applyFrameToScreen(driverFrame, 0);
 		driverFrame.setSize(new Dimension(rec.width, rec.height));
-
+		panel.addMouseListener(this);
+		
+		mapLoadButton = new JButton("Load Map");
+		panel.add(mapLoadButton);
+		mapLoadButton.addActionListener(this);
+		mapLoadButton.setBounds(30, 850, 150, 30);
+		
+		startBattleButton = new JButton("Enter Combat");
+		panel.add(startBattleButton);
+		startBattleButton.addActionListener(this);
+		startBattleButton.setBounds(1150, 560, 700, 30);
+		
+		incrementBattleButton = new JButton("Increment Turn");
+		panel.add(incrementBattleButton);
+		incrementBattleButton.addActionListener(this);
+		incrementBattleButton.setBounds(1150, 900, 700, 30);
+		
+		battleArea = new JTextArea();
+		battleArea.setFont(defaultFont);
+		panel.add(battleArea);
+		battleArea.setBounds(1150, 600, 700, 300);
+		
+		int xPos = 1150;
+		int yPos = 30;
+		for (ActorController act: actorControllers) {
+			panel.add(act.entry.label);
+			act.entry.label.setBounds(xPos, yPos, 450, 30);
+			act.entry.label.setFont(defaultFont);
+			panel.add(act.entry.damageButton);
+			act.entry.damageButton.setBounds(xPos + 500, yPos, 200, 30);
+			yPos += 50;
+		}
+		
 
 		//engage panel
 		driverFrame.add(panel);
 		driverFrame.setVisible(true);
 
 		//handle display
-		driverDisplay = new Display(board.getWidth(), board.getHeight(), (int)(rec.width/1.0), (int)(rec.height/1.0), panel);
+		driverDisplay = new Display(board.getWidth(), board.getHeight(), (int)(rec.width/1.0), (int)(rec.height/1.0), panel, true);
 		File[] tiles = getFilesByExtention(new File(tilePath), "png");	
 		for (File f: tiles) {
 			driverDisplay.addTileToMap(loadImage(f));
 		}
+		driverDisplay.addTileToMap(playerImg);
+		driverDisplay.addTileToMap(enemyImg);
 		driverDisplay.scaleTiles();
 		driverDisplay.displayBoard(board, actorControllers);
 		
 		for (ActorController act: actorControllers) {
-			//panel.add(act.actorIcon);
-			//act.actorIcon.setBounds(700, 700, 64, 64);
+			driverDisplay.displayActor(act.actor);
 		}
-
 	}
 
 	private void initDisplayFrame() {
@@ -114,13 +150,24 @@ public class Driver implements ActionListener, MouseListener {
 		displayFrame.setVisible(true);
 
 		//handle display
-		displayDisplay = new Display(board.getWidth(), board.getHeight(), rec.width, rec.height, panel);
+		displayDisplay = new Display(board.getWidth(), board.getHeight(), rec.width, rec.height, panel, false);
 		File[] tiles = getFilesByExtention(new File(tilePath), "png");	
 		for (File f: tiles) {
 			displayDisplay.addTileToMap(loadImage(f));
 		}
 		displayDisplay.scaleTiles();
 		displayDisplay.displayBoard(board, actorControllers);
+	}
+	
+	public void setupBoard(String name) {
+		int[] dims = getMapDims(mapPath + name);
+		int[][] map = new int[dims[0]][dims[1]];
+		boolean[][] walls = new boolean[dims[0]][dims[1]];
+		boolean dark = getMapDarkness(mapPath + name);
+		loadMap(map, walls, mapPath + name);
+
+		board = new Board(map, walls);
+		board.darkened = dark;
 	}
 
 	private Rectangle applyFrameToScreen(JFrame frame, int screen) {
@@ -274,8 +321,25 @@ public class Driver implements ActionListener, MouseListener {
 	}
 
 	@Override
-	public void actionPerformed(ActionEvent arg0) {
-		
+	public void actionPerformed(ActionEvent e) {
+		System.out.println(e);
+		if (e.getSource() == mapLoadButton) {
+			System.out.println("map");
+			FileDialog fd = new FileDialog(this, "Choose a map file", FileDialog.LOAD);
+			fd.setDirectory(mapPath);
+			fd.setFile("*.txt");
+			fd.setVisible(true);
+			String filename = fd.getFile();
+			if (filename == null) {
+				System.out.println("You cancelled the choice");
+			} else {
+				System.out.println("You chose " + filename);
+				setupBoard(filename);
+				driverDisplay.update(board, actorControllers);
+				displayDisplay.displayBoard(board, actorControllers);
+			}
+			
+		}
 	}
 
 	private String tilePath = "C:\\Users\\conno\\OneDrive\\Desktop\\Projector\\Resources";
@@ -289,22 +353,31 @@ public class Driver implements ActionListener, MouseListener {
 	private Actor selected = null;
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		System.out.println(e);
+		board.clearHighlighting();
 		int[] coords = getMouseCoords(e.getX(), e.getY());
 		System.out.println(coords[0] + ":" + coords[1]);
 		if (board.inBounds(coords[0],  coords[1])) {
 			Actor act = getClickedActor(coords[0], coords[1]);
 			if (selected != null) {
-				if (act != null) {
-					act.x = coords[0];
-					act.y = coords[1];
+				if (act == null) {
+					System.out.println("moving actor");
+					//TODO: ensure that you can't jump anywhere in the dark
+					//if (board.getDistance(selected.x, selected.y, coords[0], coords[1]) <= selected.distance && !board.getWallAt(coords[0], coords[1])) {
+						selected.x = coords[0];
+						selected.y = coords[1];
+					//}
 				}
+				selected = null;
 			} else {
-				selected = act;
-				driverDisplay.highlightActor(board, act);
-				displayDisplay.highlightActor(board, act);
+				if (act != null) {
+					selected = act;
+					driverDisplay.highlightActor(board, act);
+					displayDisplay.highlightActor(board, act);
+				}
 			}
 		}
+		driverDisplay.update(board, actorControllers);
+		displayDisplay.displayBoard(board, actorControllers);
 		
 	}
 
