@@ -57,11 +57,45 @@ public class Board {
 	}
 	
 	public void highlight(int x, int y, int distance) {
-		for (int a = 0; a < getWidth(); a++) {
-			for (int b = 0; b < getHeight(); b++) {
-				highlightMap[a][b] = getDistance(a, b, x, y) <= distance && !wallMap[a][b];
+		
+		
+		for (int i = 0; i < distance; i++) {
+			boolean[][] temp = new boolean[getWidth()][getHeight()];
+			for (int a = 0; a < getWidth(); a++) {
+				for (int b = 0; b < getHeight(); b++) {
+					temp[a][b] = false;
+				}
+			}
+			for (int a = 0; a < getWidth(); a++) {
+				for (int b = 0; b < getHeight(); b++) {
+					if (highlightMap[a][b] || (a == x && b == y)) {
+						if (inBounds(a + 1, b) && !wallMap[a + 1][b]) {
+							temp[a + 1][b] = true;
+						}
+						if (inBounds(a - 1, b) && !wallMap[a - 1][b]) {
+							temp[a - 1][b] = true;
+						}
+						if (inBounds(a, b + 1) && !wallMap[a][b + 1]) {
+							temp[a][b + 1] = true;
+						}
+						if (inBounds(a, b - 1) && !wallMap[a][b - 1]) {
+							temp[a][b - 1] = true;
+						}
+					}
+				}
+			}
+			for (int a = 0; a < getWidth(); a++) {
+				for (int b = 0; b < getHeight(); b++) {
+					highlightMap[a][b] = highlightMap[a][b] | temp[a][b];
+				}
 			}
 		}
+		
+//		for (int a = 0; a < getWidth(); a++) {
+//			for (int b = 0; b < getHeight(); b++) {
+//				highlightMap[a][b] = getDistance(a, b, x, y) <= distance && !wallMap[a][b];
+//			}
+//		}
 	}
 	
 	public void clearHighlighting() {

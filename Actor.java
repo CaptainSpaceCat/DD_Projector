@@ -2,6 +2,8 @@ import java.util.Random;
 
 public class Actor{
 
+	public String name;
+	
 	public Random rand;
 
 	public boolean hasDarkVision = false; //12
@@ -17,17 +19,35 @@ public class Actor{
 	
 	private ObjectStats stats;
 	
+
+
+	public enum actorType {
+		PLAYER,
+		ENEMY,
+	};
+
+	public actorType type;
 	
 
 	public Actor() {
 
 	}
 
-	public Actor(int lev, double xPos, double yPos) {
+	public Actor(int lev, double xPos, double yPos, actorType t) {
+		level = lev;
+		type = t;
+		position[0] = xPos;
+		position[1] = yPos;
+		stats = new ObjectStats(0, 0, 0, 0, 0, 0, 0, 0, 6);
+		stats.setProficiencyBonus(calcProficiencyBonus(level));
+	}
+	
+	public Actor(int lev, double xPos, double yPos, ObjectStats stats) {
 		level = lev;
 		position[0] = xPos;
 		position[1] = yPos;
-		stats.setProficiencyBonus(calcProficiencyBonus(level));
+		this.stats = stats;
+		this.stats.setProficiencyBonus(calcProficiencyBonus(level));
 	}
 	
 	public void setLevel(int lev) {
@@ -53,6 +73,10 @@ public class Actor{
 	
 	public double[] getPosition() {
 		return position;
+	}
+	
+	public int[] getCoordinates() {
+		return new int[] {(int)position[0], (int)position[1]};
 	}
 
 	public void setStats(int stren, int dex, int con, 

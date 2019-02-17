@@ -6,13 +6,12 @@ import javax.swing.JLabel;
 
 public class ActorController {
 		public Actor actor;
-		public JLabel actorIcon;
 		public ActorEntry entry;
 		
-		public ActorController(int x, int y, int l, String n, BufferedImage img, int d) {
-			actor = new Actor(x, y, l, n, d);
-			actorIcon = new JLabel(new ImageIcon(img));
+		public ActorController(int x, int y, boolean l, String n, int d, Actor.actorType t) {
+			actor = new Actor(1, x, y, t);
+			actor.hasLight = l;
 			entry = new ActorEntry();
-			entry.setText(n);
+			actor.name = n;
 		}
 	}
