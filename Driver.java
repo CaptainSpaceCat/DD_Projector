@@ -25,6 +25,8 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
+
 
 public class Driver extends JFrame implements ActionListener, MouseListener {
 
@@ -37,6 +39,7 @@ public class Driver extends JFrame implements ActionListener, MouseListener {
 	//declare driver-specific ui objects
 	private JTextArea battleArea;
 	private JButton newWorldButton, startBattleButton, incrementBattleButton, mapLoadButton;
+	private JTextField damageField;
 	
 	public JFrame driverFrame = this;
 	public JFrame displayFrame;
@@ -50,9 +53,17 @@ public class Driver extends JFrame implements ActionListener, MouseListener {
 		setupBoard("cave.txt");
 
 		actorControllers = new ArrayList<ActorController>();
-		actorControllers.add(new ActorController(0, 0, 4, "Suhas", playerImg, 5));
-		actorControllers.add(new ActorController(7, 14, 12, "Elegant Wood", playerImg, 5));
-		actorControllers.add(new ActorController(16, 10, 12, "Death Tyrant", enemyImg, 7));
+		actorControllers.add(new ActorController(0, 0, true, "Suhas", 5, Actor.actorType.PLAYER));
+		actorControllers.get(actorControllers.size() - 1).actor.setStats(1, 1, 1, 1, 1, 1);
+		actorControllers.get(actorControllers.size() - 1).actor.hasDarkVision = true;
+		actorControllers.add(new ActorController(0, 0, false, "Torchless Wonder", 5, Actor.actorType.PLAYER));
+		actorControllers.get(actorControllers.size() - 1).actor.setStats(1, 1, 1, 1, 1, 1);
+		actorControllers.add(new ActorController(7, 14, true, "Elegant Wood", 5, Actor.actorType.PLAYER));
+		actorControllers.get(actorControllers.size() - 1).actor.setStats(1, 1, 1, 1, 1, 1);
+		actorControllers.add(new ActorController(16, 10, false, "Death Tyrant", 7, Actor.actorType.ENEMY));
+		actorControllers.get(actorControllers.size() - 1).actor.setStats(1, 1, 1, 1, 1, 1);
+		actorControllers.get(actorControllers.size() - 1).actor.hasDarkVision = true;
+		
 
 		initDriverFrame();
 		initDisplayFrame();
@@ -98,7 +109,7 @@ public class Driver extends JFrame implements ActionListener, MouseListener {
 		battleArea.setBounds(1150, 600, 700, 300);
 		
 		int xPos = 1150;
-		int yPos = 30;
+		int yPos = 70;
 		for (ActorController act: actorControllers) {
 			panel.add(act.entry.label);
 			act.entry.label.setBounds(xPos, yPos, 450, 30);
@@ -108,6 +119,12 @@ public class Driver extends JFrame implements ActionListener, MouseListener {
 			yPos += 50;
 		}
 		
+		damageField = new JTextField();
+		panel.add(damageField);
+		damageField.setBounds(xPos + 500, 30, 200, 30);
+		damageField.setFont(defaultFont);
+		
+		updateActorDisplays();
 
 		//engage panel
 		driverFrame.add(panel);
@@ -157,6 +174,12 @@ public class Driver extends JFrame implements ActionListener, MouseListener {
 		}
 		displayDisplay.scaleTiles();
 		displayDisplay.displayBoard(board, actorControllers);
+	}
+	
+	private void updateActorDisplays() {
+		for (ActorController act: actorControllers) {
+			act.entry.label.setText(act.actor.name + " --- HP: " + act.actor.getStats().getHitPoints() + "/" + act.actor.getStats().getMaxHitPoints());
+		}
 	}
 	
 	public void setupBoard(String name) {
@@ -313,7 +336,7 @@ public class Driver extends JFrame implements ActionListener, MouseListener {
 	
 	public Actor getClickedActor(int x, int y) {
 		for (ActorController act: actorControllers) {
-			if (act.actor.x == x && act.actor.y == y) {
+			if (act.actor.getPosition()[0] == x && act.actor.getPosition()[1] == y) {
 				return act.actor;
 			}
 		}
@@ -363,8 +386,8 @@ public class Driver extends JFrame implements ActionListener, MouseListener {
 					System.out.println("moving actor");
 					//TODO: ensure that you can't jump anywhere in the dark
 					//if (board.getDistance(selected.x, selected.y, coords[0], coords[1]) <= selected.distance && !board.getWallAt(coords[0], coords[1])) {
-						selected.x = coords[0];
-						selected.y = coords[1];
+						selected.getPosition()[0] = coords[0];
+						selected.getPosition()[1] = coords[1];
 					//}
 				}
 				selected = null;
@@ -372,7 +395,9 @@ public class Driver extends JFrame implements ActionListener, MouseListener {
 				if (act != null) {
 					selected = act;
 					driverDisplay.highlightActor(board, act);
-					displayDisplay.highlightActor(board, act);
+					if (act.type == Actor.actorType.PLAYER) {
+						displayDisplay.highlightActor(board, act);
+					}
 				}
 			}
 		}
