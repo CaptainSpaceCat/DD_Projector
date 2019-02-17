@@ -2,16 +2,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 
 public class CombatSystem {
-	public static ArrayList<Actor> makeNewList() {
-		ArrayList<Actor> actorList = new ArrayList<Actor>();
-		actorList.add(new Player(1, 7, 0, 0));
-		actorList.add(new Player(1, 5, 0, 0));
-		actorList.add(new Player(1, 8, 0, 0));
-		actorList.add(new Enemy(1, 24, 0, 0, 3));
-		actorList.add(new Enemy(1, 3, 0, 0, 3));
-		return actorList;
-	}
-	
+
 	private static ArrayList<Actor> getActorReferencesSortedByInitiative(ArrayList<Actor> actors) {
 		ArrayList<Actor> sortedActors = new ArrayList<Actor>();
 		ArrayList<Tuple<Actor, Integer>> actorInitiatives = new ArrayList<Tuple<Actor, Integer>>();
@@ -38,6 +29,61 @@ public class CombatSystem {
 		}
 		return sortedActors;
 	}
-	
-	
+
+
+
+	public void UpdateCombat(ActorInteraction interaction) {
+		switch (interaction.interact)
+		{
+		case DEATH_SAVE: //Handles 20, 1, >10 and <10
+			int roll = interaction.getInfluence();
+			
+			Player target = (Player)interaction.reactor;
+			if (target.getStats().getHitPoints() > 0) {
+				target.resetDeathSavingThrow();
+			} else {
+				if (roll == 20) {
+					interaction.reactor.getStats().setHitPoints(1);
+					target.resetDeathSavingThrow();
+				} else if (roll == 1) {
+					for (int i = 0; i < 2; i++) {
+						if (target.deathSavingThrowFailure() >= 3) {
+							target.isAlive = false;
+							target.resetDeathSavingThrow();
+							break;
+						}
+					}
+				} else if (roll >= 10) {
+					if (target.deathSavingThrowSuccess() >= 3) {
+						target.isStable = true;
+						target.resetDeathSavingThrow();
+					}
+				} else {
+					if (target.deathSavingThrowFailure() >= 3) {
+						target.isAlive = false;
+						target.resetDeathSavingThrow();
+					}
+				}
+			}
+			break;
+		case PHYSICAL_ATTACK:
+			int damage = interaction.getInfluence();
+			interaction.reactor.loseHP(damage);
+			if (interaction.reactor instanceof Player && interaction.reactor.getStats().getHitPoints() <= 0) {
+				target = (Player)interaction.reactor;
+				target.isUnconscious = true;
+				target.isStable = false;
+			}
+			break;
+		case MAGICAL_ATTACK:
+			System.out.println("Magical-dagical uwuwu");
+			break;
+		case HEAL:
+			int hitPoints = interaction.getInfluence();
+			interaction.reactor.gainHP(hitPoints);
+			break;
+		default:
+			break;
+		}
+	}
 }
