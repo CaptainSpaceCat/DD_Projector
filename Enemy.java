@@ -12,8 +12,8 @@ public class Enemy extends Actor {
 
 	}
 
-	Enemy(int lev, int ini, double xPos, double yPos, int iniCount){
-		super(lev, ini, xPos, yPos);
+	Enemy(int lev, double xPos, double yPos, int iniCount){
+		super(lev, xPos, yPos);
 		initiativeCount = iniCount;
 	}
 

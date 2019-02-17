@@ -23,9 +23,8 @@ public class Actor{
 
 	}
 
-	public Actor(int lev, int ini, double xPos, double yPos) {
+	public Actor(int lev, double xPos, double yPos) {
 		level = lev;
-		initiative = ini;
 		position[0] = xPos;
 		position[1] = yPos;
 		stats.setProficiencyBonus(calcProficiencyBonus(level));
